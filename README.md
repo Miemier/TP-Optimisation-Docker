@@ -134,3 +134,26 @@ processus est compromis, l’attaquant hérite de uid 1000 (node) et non de root
 ![docker images — baseline](screenshots/runmodif4.png)
 ![docker images — baseline](screenshots/serverrunmodif1.png)
 *Vérification fonctionnelle après l'Étape 4*
+
+## Étape 5 — EXPOSE : déclaration fidèle
+
+### Problème : 
+![docker images — baseline](screenshots/modif5-0.png)
+EXPOSE 3000 4000 5000 — l’application n’écoute que sur le port 3000 ; 4000 et 5000 sont des déclarations fantômes
+
+### Modifications :
+![docker images — baseline](screenshots/modif5.png)
+- Suppression des ports 4000 et 5000, on ne déclare que le port réellement écuté
+
+### Résultat : 
+
+![docker images — baseline](screenshots/modif5-port.png)
+
+![docker images — baseline](screenshots/modif5-257MB.png)
+*étape4 257MB -> étape5 257MB*
+
+Explication : EXPOSE ne crée aucune couche et n’ajoute aucun fichier : il ne fait qu’ajouter le port aux métadonnées de l’image (champ ExposedPorts du manifeste). Même raison pour USER node à l’étape 4 — les deux dernières étapes durcissent la déclaration de l’image, pas son poids.
+
+![docker images — baseline](screenshots/runmodif5.png)
+![docker images — baseline](screenshots/serverrunmodif1.png)
+*Vérification fonctionnelle après l'Étape 5*

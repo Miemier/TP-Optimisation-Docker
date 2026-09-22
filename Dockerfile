@@ -40,13 +40,14 @@ COPY --from=builder --chown=node:node /app/server.js ./server.js
 #USER root -> USER node (uid 1000, fourni par l'image officielle)
 USER node
 
-
-
 #1.2
 #RUN apt-get update && apt-get install -y build-essential ca-certificates locales && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen
 #Suppression de RUN apt-get update && apt-get install -y build-essential
 
-EXPOSE 3000 4000 5000
+#5
+#EXPOSE 3000 4000 5000
+EXPOSE 3000
+
 #3.5
 #ENV NODE_ENV=development
 #RUN npm run build
