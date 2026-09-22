@@ -108,3 +108,29 @@ stage runtime.
 *NODE_ENV=production vérifié*
 
 *node_modules ：13.2M*
+
+## Étape 4 — Utilisateur non root
+
+### Problème : 
+conteneur exécuté en root (défaut Docker) — si le process est compromis, l’attaquant est root sur l’hôte
+
+### Modifications :
+![docker images — baseline](screenshots/modif4.png)
+- USER node (uid 1000, fourni par l’image
+officielle) + --chown=node:node sur le COPY final
+
+### Résultat : 
+
+![docker images — baseline](screenshots/modif4-257MB.png)
+*étape3 257MB -> étape4 257MB*
+
+Explication : USER est une directive d’exécution : elle détermine l’identité (uid) du processus au démarrage du conteneur, mais n’ajoute ni ne retire aucun fichier de l’image. Le contenu (node, node_modules, server.js) étant identique à étape3, le volume reste logiquement à 257 MB. L’absence de gain de taille ici est attendue — le gain de cette étape est sécuritaire, pas volumétrique : si le
+processus est compromis, l’attaquant hérite de uid 1000 (node) et non de root sur l’hôte.
+
+![docker images — baseline](screenshots/modif4-user.png)
+- utilisateur ： node (et non “root”)
+- uid=1000(node) gid=1000(node) groups=1000(node)
+
+![docker images — baseline](screenshots/runmodif4.png)
+![docker images — baseline](screenshots/serverrunmodif1.png)
+*Vérification fonctionnelle après l'Étape 4*

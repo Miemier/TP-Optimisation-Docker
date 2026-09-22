@@ -29,8 +29,16 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
+
 # Seul le nécessaire pour exécuter :
-COPY --from=builder /app/server.js ./server.js
+
+#4.1
+#COPY --from=builder /app/server.js ./server.js
+COPY --from=builder --chown=node:node /app/server.js ./server.js
+
+#4.2
+#USER root -> USER node (uid 1000, fourni par l'image officielle)
+USER node
 
 
 
