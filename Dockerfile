@@ -1,9 +1,12 @@
 #1.1
 #FROM node:latest
-FROM node:22-alpine
+#3.1
+#FROM node:22-alpine
 #FROM node:latest -> FROM node:22-alpine
 
 #2
+#---- builder (jetable) ----
+FROM node:22-alpine AS builder
 WORKDIR /app
 #COPY node_modules ./node_modules
 #COPY . /app
@@ -12,15 +15,32 @@ WORKDIR /app
 #reconstruites DANS l'image (compatibilité garantie), package.json copié
 #en premier pour profiter du cache des layers
 COPY package*.json ./
-RUN npm ci
+#3.2
+#RUN npm ci
+RUN npm ci && npm cache clean --force
 COPY . .
+#3.3
+RUN npm run build
+
+# ---- runtime (image finale) ----
+#3.4
+FROM node:22-alpine AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+# Seul le nécessaire pour exécuter :
+COPY --from=builder /app/server.js ./server.js
+
+
 
 #1.2
 #RUN apt-get update && apt-get install -y build-essential ca-certificates locales && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen
 #Suppression de RUN apt-get update && apt-get install -y build-essential
 
 EXPOSE 3000 4000 5000
-ENV NODE_ENV=development
-RUN npm run build
-USER root
+#3.5
+#ENV NODE_ENV=development
+#RUN npm run build
+#USER root
 CMD ["node", "server.js"]

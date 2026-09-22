@@ -69,6 +69,39 @@ dans l’image au lieu d’être copiées depuis l’hôte. Le gain de volume
 viendra du multi-stage (retrait des devDependencies du runtime).
 
 
-![docker images — baseline](screenshots/runmodif1.png)
+![docker images — baseline](screenshots/runmodif2.png)
 ![docker images — baseline](screenshots/serverrunmodif1.png)
-*Vérification fonctionnelle après l'Étape 1*
+*Vérification fonctionnelle après l'Étape 2*
+
+## Étape 3 — Multi-stage build
+
+### Problème : 
+devDependencies + npm run build dans l’image de runtime ;
+
+NODE_ENV=development en production ;
+
+impossible de faire npm ci --omit=dev car le build a besoin des devDependencies
+
+### Modifications :
+![docker images — baseline](screenshots/modif3-builder.png)
+![docker images — baseline](screenshots/modif3-runtime.png)
+- multi-stage — stage builder (npm ci complet +
+build, jetable) / stage runtime (npm ci --omit=dev + NODE_ENV=production, seul server.js est copié depuis le builder)
+- npm cache clean --force
+
+### Résultat : 
+
+![docker images — baseline](screenshots/modif3-257MB.png)
+*étape2 270MB -> étape3 257MB*
+
+Explication : le stage builder est jetable — ses devDependencies
+et son cache n’existent que pendant le build. L’image finale ne contient
+que node:22-alpine + les dépendances de production + server.js.
+npm ci --omit=dev devient possible car le build n’est plus dans le
+stage runtime.
+
+![docker images — baseline](screenshots/runmodif3.png)
+![docker images — baseline](screenshots/serverrunmodif1.png)
+*Vérification fonctionnelle après l'Étape 3*
+
+*NODE_ENV=production vérifié*
