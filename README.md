@@ -42,3 +42,33 @@ Problèmes identifiés dans le Dockerfile initial :
 - node:latest repose sur Debian complet (~1,1 GB) et son tag flottant n’est pas reproductible → alpine (~150 MB) + version figée (22)
 - apt-get n’existe pas sur alpine (gestionnaire = apk)
 - build-essential (gcc, make…) est inutile pour une app 100 % JavaScript
+
+## Étape 2 — node_modules & .dockerignore
+
+### Problème : 
+COPY node_modules recopie les dépendances de l’hôte
+(Windows) dans une image Alpine → binaires potentiellement incompatibles, contexte de build enflé, aucun .dockerignore ; npm install placé après COPY . . → cache Docker inutilisé
+
+### Modifications :
+![docker images — baseline](screenshots/modif2.png)
+- suppression de COPY node_modules
+- ordre COPY package*.json → npm ci → COPY . ., ajout de .dockerignore
+
+### Résultat : 
+
+![docker images — baseline](screenshots/modif2-270MB.png)
+*étape1 264MB -> étape2 270MB*
+
+*mais :
+contexte de build réduit de ~Mo à ~Ko, dépendances garanties
+compatibles Alpine, cache des layers activé*
+
+Explication : l’objectif de cette étape est la correction et la
+vitesse de build, pas le volume : les dépendances sont reconstruites
+dans l’image au lieu d’être copiées depuis l’hôte. Le gain de volume
+viendra du multi-stage (retrait des devDependencies du runtime).
+
+
+![docker images — baseline](screenshots/runmodif1.png)
+![docker images — baseline](screenshots/serverrunmodif1.png)
+*Vérification fonctionnelle après l'Étape 1*
