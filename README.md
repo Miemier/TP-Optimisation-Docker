@@ -102,6 +102,9 @@ stage runtime.
 
 ![docker images — baseline](screenshots/runmodif3.png)
 ![docker images — baseline](screenshots/serverrunmodif1.png)
+![docker images — baseline](screenshots/modif3-realsize.png)
 *Vérification fonctionnelle après l'Étape 3*
 
 *NODE_ENV=production vérifié*
+
+*node_modules ：13.2M*
