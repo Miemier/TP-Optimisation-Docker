@@ -157,3 +157,24 @@ Explication : EXPOSE ne crée aucune couche et n’ajoute aucun fichier : il ne 
 ![docker images — baseline](screenshots/runmodif5.png)
 ![docker images — baseline](screenshots/serverrunmodif1.png)
 *Vérification fonctionnelle après l'Étape 5*
+
+## Bilan final
+
+| Étape | Optimisation | Taille | Gain cumulé |
+|---|---|---|---|
+| 0 — baseline | `node:latest` + `COPY node_modules` + `build-essential` | 1,88 GB | — |
+| 1 | `node:22-alpine`, suppression de `build-essential` | 264 MB | −86,0 % |
+| 2 | Suppression de `COPY node_modules`, `.dockerignore`, ordre des layers | 270 MB | −85,6 % |
+| 3 | Multi-stage build, `npm ci --omit=dev`, `NODE_ENV=production` | 257 MB | −86,3 % |
+| 4 | `USER node` (uid 1000) — gain sécuritaire | 257 MB | −86,3 % |
+| 5 | `EXPOSE 3000` — déclaration fidèle (métadonnées seules) | 257 MB | −86,3 % |
+
+
+
+## Conclusion
+
+Taille finale : **257 MB** contre **1,88 GB** au départ, soit **−86,3 %**.
+
+L'image finale ne contient plus que le strict nécessaire : `node:22-alpine`, les dépendances de production et `server.js`, exécuté sans privilèges. Les 8 problèmes identifiés dans le Dockerfile initial sont tous corrigés : image de base fixée, dépendances reconstruites dans l'image, cache des layers fonctionnel, devDependencies exclues du runtime, `build-essential` supprimé, `NODE_ENV=production`, utilisateur non root, `.dockerignore` et multi-stage en place.
+
+Les étapes 4 et 5 n'apportent pas de gain volumétrique — c'est attendu : leur valeur est sécuritaire (identité du processus) et documentaire (déclaration de port fidèle), pas pondérale.
